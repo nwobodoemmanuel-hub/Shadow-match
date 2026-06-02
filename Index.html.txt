@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Match</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+:root {
+–bg: #0e0f14;
+–surface: #16181f;
+–surface2: #1e2029;
+–border: #2a2d3a;
+–text: #e8e9f0;
+–muted: #5a5d72;
+–accent: #c8ff57;
+–danger: #ff4757;
+–success: #2ed573;
+–warn: #ffa502;
+–timer-color: #c8ff57;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+font-family: ‘Space Grotesk’, sans-serif;
+min-height: 100vh;
+color: var(–text);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+padding: 24px 16px 40px;
+background-image:
+radial-gradient(ellipse at 10% 0%, rgba(200,255,87,0.04) 0%, transparent 60%),
+radial-gradient(ellipse at 90% 100%, rgba(150,100,255,0.05) 0%, transparent 60%);
+}
+
+/* Header */
+.header {
+width: 100%;
+max-width: 620px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 28px;
+}
+
+.logo {
+font-family: ‘Syne’, sans-serif;
+font-size: 1.4rem;
+font-weight: 800;
+letter-spacing: -0.5px;
+color: var(–text);
+}
+
+.logo span { color: var(–accent); }
+
+.hud {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+
+.hud-item {
+display: flex;
+flex-direction: column;
+align-items: flex-end;
+}
+
+.hud-label {
+font-size: 0.6rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 2px;
+color: var(–muted);
+}
+
+.hud-value {
+font-family: ‘Syne’, sans-serif;
+font-size: 1.1rem;
+font-weight: 700;
+color: var(–text);
+line-height: 1;
+}
+
+.hud-value.accent { color: var(–accent); }
+
+/* Progress bar */
+.progress-track {
+width: 100%;
+max-width: 620px;
+height: 3px;
+background: var(–border);
+border-radius: 2px;
+margin-bottom: 24px;
+overflow: hidden;
+}
+
+.progress-fill {
+height: 100%;
+background: var(–accent);
+border-radius: 2px;
+transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+box-shadow: 0 0 10px rgba(200,255,87,0.5);
+}
+
+/* Main card */
+.card {
+width: 100%;
+max-width: 620px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 20px;
+padding: 28px 24px 24px;
+position: relative;
+}
+
+/* Round info */
+.round-info {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 22px;
+}
+
+.round-tag {
+font-size: 0.7rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 2.5px;
+color: var(–muted);
+background: var(–surface2);
+padding: 5px 12px;
+border-radius: 20px;
+border: 1px solid var(–border);
+}
+
+.difficulty-tag {
+font-size: 0.7rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 1.5px;
+padding: 5px 12px;
+border-radius: 20px;
+border: 1px solid;
+}
+
+.diff-easy { color: var(–success); border-color: rgba(46,213,115,0.3); background: rgba(46,213,115,0.07); }
+.diff-medium { color: var(–warn); border-color: rgba(255,165,2,0.3); background: rgba(255,165,2,0.07); }
+.diff-hard { color: var(–danger); border-color: rgba(255,71,87,0.3); background: rgba(255,71,87,0.07); }
+
+/* Timer ring */
+.timer-section {
+display: flex;
+justify-content: center;
+margin-bottom: 20px;
+}
+
+.timer-wrap {
+position: relative;
+width: 64px;
+height: 64px;
+}
+
+.timer-svg {
+width: 64px;
+height: 64px;
+transform: rotate(-90deg);
+}
+
+.timer-track { fill: none; stroke: var(–surface2); stroke-width: 4; }
+.timer-ring {
+fill: none;
+stroke: var(–timer-color);
+stroke-width: 4;
+stroke-linecap: round;
+stroke-dasharray: 175.9;
+stroke-dashoffset: 0;
+transition: stroke-dashoffset 1s linear, stroke 0.3s;
+}
+
+.timer-num {
+position: absolute;
+inset: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+font-family: ‘Syne’, sans-serif;
+font-size: 1.2rem;
+font-weight: 800;
+color: var(–text);
+}
+
+/* Object display */
+.puzzle-area {
+display: flex;
+gap: 20px;
+align-items: stretch;
+margin-bottom: 20px;
+}
+
+.object-panel {
+flex-shrink: 0;
+width: 140px;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 16px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 16px 12px 12px;
+gap: 10px;
+position: relative;
+}
+
+.obj-label {
+font-size: 0.62rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 2px;
+color: var(–muted);
+}
+
+.obj-svg-wrap {
+width: 88px;
+height: 88px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.obj-svg-wrap svg {
+width: 80px;
+height: 80px;
+animation: objectFloat 4s ease-in-out infinite;
+filter: drop-shadow(0 4px 16px rgba(200,255,87,0.12));
+}
+
+@keyframes objectFloat {
+0%, 100% { transform: translateY(0) rotate(0deg); }
+33% { transform: translateY(-5px) rotate(1deg); }
+66% { transform: translateY(-3px) rotate(-1deg); }
+}
+
+.hint-strip {
+flex: 1;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 14px 16px;
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 8px;
+}
+
+.hint-title {
+font-size: 0.65rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 2px;
+color: var(–muted);
+}
+
+.hint-text {
+font-size: 0.88rem;
+color: var(–text);
+line-height: 1.5;
+opacity: 0.85;
+}
+
+.hint-clue {
+display: flex;
+align-items: center;
+gap: 6px;
+margin-top: 2px;
+}
+
+.clue-dot {
+width: 5px;
+height: 5px;
+border-radius: 50%;
+background: var(–accent);
+flex-shrink: 0;
+}
+
+.clue-text {
+font-size: 0.78rem;
+color: var(–muted);
+line-height: 1.3;
+}
+
+/* Grid */
+.grid-label {
+font-size: 0.65rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 2px;
+color: var(–muted);
+margin-bottom: 12px;
+}
+
+.shadows-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 10px;
+margin-bottom: 16px;
+}
+
+.shadow-option {
+background: var(–surface2);
+border: 1.5px solid var(–border);
+border-radius: 12px;
+height: 90px;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+position: relative;
+overflow: hidden;
+transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.shadow-option::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: radial-gradient(circle at 50% 50%, rgba(200,255,87,0.06) 0%, transparent 70%);
+opacity: 0;
+transition: opacity 0.2s;
+}
+
+.shadow-option:hover:not(.disabled)::before { opacity: 1; }
+
+.shadow-option:hover:not(.disabled) {
+border-color: rgba(200,255,87,0.4);
+transform: translateY(-2px);
+}
+
+.shadow-option svg {
+width: 56px;
+height: 56px;
+filter: brightness(0) invert(1) opacity(0.5);
+}
+
+.shadow-option .opt-num {
+position: absolute;
+top: 5px;
+left: 7px;
+font-size: 0.6rem;
+font-weight: 700;
+color: var(–muted);
+font-family: ‘Syne’, sans-serif;
+}
+
+.shadow-option.correct {
+background: rgba(46,213,115,0.1);
+border-color: var(–success);
+}
+
+.shadow-option.correct svg {
+filter: brightness(0) saturate(100%) invert(72%) sepia(55%) saturate(400%) hue-rotate(82deg) brightness(110%);
+}
+
+.shadow-option.wrong {
+background: rgba(255,71,87,0.1);
+border-color: var(–danger);
+animation: wrongShake 0.35s ease;
+}
+
+.shadow-option.wrong svg {
+filter: brightness(0) saturate(100%) invert(38%) sepia(79%) saturate(1200%) hue-rotate(335deg) brightness(110%);
+}
+
+.shadow-option.dimmed {
+opacity: 0.3;
+}
+
+.shadow-option.disabled { cursor: default; pointer-events: none; }
+
+.result-badge {
+position: absolute;
+top: 5px;
+right: 6px;
+width: 18px;
+height: 18px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 0.65rem;
+font-weight: 900;
+}
+
+.badge-correct { background: var(–success); color: #000; }
+.badge-wrong { background: var(–danger); color: #fff; }
+
+@keyframes wrongShake {
+0%, 100% { transform: translateX(0); }
+20% { transform: translateX(-7px); }
+60% { transform: translateX(7px); }
+}
+
+/* Feedback */
+.feedback {
+padding: 12px 16px;
+border-radius: 10px;
+font-size: 0.85rem;
+font-weight: 500;
+line-height: 1.4;
+opacity: 0;
+transform: translateY(6px);
+transition: all 0.25s ease;
+margin-bottom: 12px;
+border: 1px solid transparent;
+}
+
+.feedback.show { opacity: 1; transform: translateY(0); }
+.feedback.good { background: rgba(46,213,115,0.08); border-color: rgba(46,213,115,0.25); color: #7fffb4; }
+.feedback.bad { background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.25); color: #ff9aa3; }
+.feedback.timeout { background: rgba(255,165,2,0.08); border-color: rgba(255,165,2,0.25); color: #ffd580; }
+
+/* Next button */
+.next-btn {
+width: 100%;
+padding: 13px;
+background: var(–accent);
+color: #0e0f14;
+font-family: ‘Syne’, sans-serif;
+font-size: 0.9rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 2px;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+transition: all 0.2s;
+opacity: 0;
+pointer-events: none;
+}
+
+.next-btn.show { opacity: 1; pointer-events: all; }
+.next-btn:hover { background: #d8ff70; transform: translateY(-1px); }
+.next-btn:active { transform: translateY(0); }
+
+/* Streak indicator */
+.streak-wrap {
+position: absolute;
+top: 18px;
+right: 20px;
+display: flex;
+align-items: center;
+gap: 4px;
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.streak-wrap.show { opacity: 1; }
+.streak-icon { font-size: 0.9rem; }
+.streak-count {
+font-family: ‘Syne’, sans-serif;
+font-size: 0.8rem;
+font-weight: 700;
+color: var(–warn);
+}
+
+/* End screen */
+#endScreen {
+display: none;
+flex-direction: column;
+align-items: center;
+padding: 10px 0;
+gap: 0;
+}
+
+#endScreen.show { display: flex; }
+
+.end-graphic {
+font-size: 3.5rem;
+margin-bottom: 16px;
+animation: objectFloat 4s ease-in-out infinite;
+}
+
+.end-title {
+font-family: ‘Syne’, sans-serif;
+font-size: 2rem;
+font-weight: 800;
+color: var(–text);
+margin-bottom: 4px;
+}
+
+.end-subtitle {
+font-size: 0.85rem;
+color: var(–muted);
+margin-bottom: 24px;
+}
+
+.score-grid {
+width: 100%;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 10px;
+margin-bottom: 24px;
+}
+
+.score-cell {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 14px 10px;
+text-align: center;
+}
+
+.score-cell-num {
+font-family: ‘Syne’, sans-serif;
+font-size: 1.6rem;
+font-weight: 800;
+color: var(–accent);
+line-height: 1;
+margin-bottom: 4px;
+}
+
+.score-cell-label {
+font-size: 0.65rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 1.5px;
+color: var(–muted);
+}
+
+.rating-bar {
+width: 100%;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 14px 18px;
+margin-bottom: 20px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.rating-icon { font-size: 1.8rem; }
+
+.rating-text {
+flex: 1;
+}
+
+.rating-name {
+font-family: ‘Syne’, sans-serif;
+font-size: 1rem;
+font-weight: 700;
+color: var(–text);
+margin-bottom: 2px;
+}
+
+.rating-desc {
+font-size: 0.78rem;
+color: var(–muted);
+line-height: 1.4;
+}
+
+.play-again-btn {
+width: 100%;
+padding: 14px;
+background: transparent;
+color: var(–accent);
+font-family: ‘Syne’, sans-serif;
+font-size: 0.9rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 2px;
+border: 1.5px solid var(–accent);
+border-radius: 10px;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.play-again-btn:hover {
+background: var(–accent);
+color: #0e0f14;
+}
+
+/* Scanline overlay for texture */
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background: repeating-linear-gradient(
+0deg,
+transparent,
+transparent 2px,
+rgba(0,0,0,0.03) 2px,
+rgba(0,0,0,0.03) 4px
+);
+pointer-events: none;
+z-index: 999;
+}
+
+@media (max-width: 480px) {
+.puzzle-area { flex-direction: column; }
+.object-panel { width: 100%; flex-direction: row; justify-content: flex-start; padding: 12px 16px; }
+.obj-svg-wrap { width: 60px; height: 60px; }
+.obj-svg-wrap svg { width: 52px; height: 52px; }
+.shadows-grid { grid-template-columns: repeat(2, 1fr); }
+.shadow-option { height: 100px; }
+.shadow-option svg { width: 64px; height: 64px; }
+}
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">SHADOW<span>.</span>MATCH</div>
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-label">Score</span>
+      <span class="hud-value accent" id="scoreDisplay">0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">Streak</span>
+      <span class="hud-value" id="streakDisplay">0</span>
+    </div>
+  </div>
+</div>
+
+<div class="progress-track">
+  <div class="progress-fill" id="progressFill" style="width:0%"></div>
+</div>
+
+<div class="card">
+  <div id="gameContent">
+    <div class="round-info">
+      <div class="round-tag" id="roundTag">Round 1 / 12</div>
+      <div class="difficulty-tag" id="diffTag">Easy</div>
+    </div>
+
+```
+<div class="timer-section">
+  <div class="timer-wrap">
+    <svg class="timer-svg" viewBox="0 0 64 64">
+      <circle class="timer-track" cx="32" cy="32" r="28"/>
+      <circle class="timer-ring" id="timerRing" cx="32" cy="32" r="28"/>
+    </svg>
+    <div class="timer-num" id="timerNum">20</div>
+  </div>
+</div>
+
+<div class="puzzle-area">
+  <div class="object-panel">
+    <div class="obj-label">Object</div>
+    <div class="obj-svg-wrap">
+      <svg id="objectSvg" viewBox="0 0 100 100"></svg>
+    </div>
+    <div class="obj-label" id="objNameLabel">—</div>
+  </div>
+  <div class="hint-strip" id="hintStrip">
+    <div class="hint-title">Clues</div>
+    <div id="hintLines"></div>
+  </div>
+</div>
+
+<div class="grid-label">Select the matching shadow</div>
+<div class="shadows-grid" id="shadowsGrid"></div>
+
+<div class="feedback" id="feedbackBar"></div>
+<button class="next-btn" id="nextBtn">Continue</button>
+```
+
+  </div>
+
+  <div id="endScreen">
+    <div class="end-graphic" id="endGraphic">🎯</div>
+    <div class="end-title" id="endTitle">Completed</div>
+    <div class="end-subtitle" id="endSubtitle">Here's how you did</div>
+    <div class="score-grid">
+      <div class="score-cell">
+        <div class="score-cell-num" id="finalCorrect">0</div>
+        <div class="score-cell-label">Correct</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-cell-num" id="finalScore">0</div>
+        <div class="score-cell-label">Points</div>
+      </div>
+      <div class="score-cell">
+        <div class="score-cell-num" id="finalStreak">0</div>
+        <div class="score-cell-label">Best Streak</div>
+      </div>
+    </div>
+    <div class="rating-bar">
+      <div class="rating-icon" id="ratingIcon">🧠</div>
+      <div class="rating-text">
+        <div class="rating-name" id="ratingName">Sharp Eye</div>
+        <div class="rating-desc" id="ratingDesc">You identified the silhouettes with precision.</div>
+      </div>
+    </div>
+    <button class="play-again-btn" onclick="init()">Play Again</button>
+  </div>
+</div>
+
+<script>
+// ─── PUZZLE DATA ────────────────────────────────────────────────────────────
+// Each puzzle: label, difficulty, hints[], correctIdx (0-based in shadows[]),
+// objectSvg (colored), shadows[] (4 silhouette SVGs)
+// Difficulty levels: easy/medium/hard — decoys get progressively more similar
+
+const ALL_PUZZLES = [
+
+  // ── EASY ──────────────────────────────────────────────────────────────────
+  {
+    label: "Anchor", difficulty: "easy",
+    hints: ["Ring at the top", "Horizontal bar through shaft", "Curved arms at the bottom"],
+    objectSvg: `
+      <circle cx="50" cy="18" r="9" fill="none" stroke="#94a3b8" stroke-width="5"/>
+      <line x1="50" y1="27" x2="50" y2="80" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+      <line x1="22" y1="48" x2="78" y2="48" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M22,48 Q10,60 18,75 Q26,85 35,80" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+      <path d="M78,48 Q90,60 82,75 Q74,85 65,80" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+    `,
+    correctIdx: 2,
+    shadows: [
+      // decoy: trident
+      `<line x1="50" y1="10" x2="50" y2="90" stroke-width="6" stroke-linecap="round"/>
+       <line x1="26" y1="10" x2="26" y2="40" stroke-width="6" stroke-linecap="round"/>
+       <line x1="74" y1="10" x2="74" y2="40" stroke-width="6" stroke-linecap="round"/>
+       <path d="M26,40 Q38,55 50,55 Q62,55 74,40" fill="none" stroke-width="6"/>`,
+      // decoy: key shape
+      `<circle cx="50" cy="30" r="16" fill="none" stroke-width="6"/>
+       <line x1="50" y1="46" x2="50" y2="88" stroke-width="6" stroke-linecap="round"/>
+       <line x1="50" y1="70" x2="62" y2="70" stroke-width="5"/>
+       <line x1="50" y1="80" x2="62" y2="80" stroke-width="5"/>`,
+      // CORRECT: anchor
+      `<circle cx="50" cy="18" r="9" fill="none" stroke-width="5"/>
+       <line x1="50" y1="27" x2="50" y2="80" stroke-width="5" stroke-linecap="round"/>
+       <line x1="22" y1="48" x2="78" y2="48" stroke-width="5" stroke-linecap="round"/>
+       <path d="M22,48 Q10,60 18,75 Q26,85 35,80" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <path d="M78,48 Q90,60 82,75 Q74,85 65,80" fill="none" stroke-width="5" stroke-linecap="round"/>`,
+      // decoy: cross with circle top
+      `<circle cx="50" cy="22" r="10" fill="none" stroke-width="5"/>
+       <line x1="50" y1="32" x2="50" y2="88" stroke-width="5"/>
+       <line x1="28" y1="55" x2="72" y2="55" stroke-width="5"/>`
+    ]
+  },
+
+  {
+    label: "Cactus", difficulty: "easy",
+    hints: ["Tall vertical body", "Two side arms bent upward", "Slightly irregular silhouette"],
+    objectSvg: `
+      <rect x="40" y="15" width="20" height="70" rx="10" fill="#4ade80"/>
+      <rect x="14" y="35" width="26" height="14" rx="7" fill="#4ade80"/>
+      <rect x="14" y="28" width="14" height="28" rx="7" fill="#4ade80"/>
+      <rect x="60" y="42" width="26" height="14" rx="7" fill="#4ade80"/>
+      <rect x="72" y="35" width="14" height="28" rx="7" fill="#4ade80"/>
+    `,
+    correctIdx: 0,
+    shadows: [
+      // CORRECT
+      `<rect x="40" y="15" width="20" height="70" rx="10"/>
+       <rect x="14" y="35" width="26" height="14" rx="7"/>
+       <rect x="14" y="28" width="14" height="28" rx="7"/>
+       <rect x="60" y="42" width="26" height="14" rx="7"/>
+       <rect x="72" y="35" width="14" height="28" rx="7"/>`,
+      // decoy: only one arm left
+      `<rect x="40" y="15" width="20" height="70" rx="10"/>
+       <rect x="14" y="38" width="26" height="14" rx="7"/>
+       <rect x="14" y="30" width="14" height="28" rx="7"/>`,
+      // decoy: arms pointing down
+      `<rect x="40" y="15" width="20" height="70" rx="10"/>
+       <rect x="14" y="50" width="26" height="14" rx="7"/>
+       <rect x="14" y="50" width="14" height="30" rx="7"/>
+       <rect x="60" y="50" width="26" height="14" rx="7"/>
+       <rect x="72" y="50" width="14" height="30" rx="7"/>`,
+      // decoy: tall thin column
+      `<rect x="44" y="10" width="12" height="80" rx="6"/>`
+    ]
+  },
+
+  {
+    label: "Hourglass", difficulty: "easy",
+    hints: ["Wide at top and bottom", "Pinched narrow waist in the center", "Symmetric top to bottom"],
+    objectSvg: `
+      <polygon points="15,10 85,10 50,50 85,90 15,90 50,50" fill="#f59e0b" opacity="0.9"/>
+      <line x1="15" y1="10" x2="85" y2="10" stroke="#f59e0b" stroke-width="4"/>
+      <line x1="15" y1="90" x2="85" y2="90" stroke="#f59e0b" stroke-width="4"/>
+    `,
+    correctIdx: 3,
+    shadows: [
+      // decoy: diamond
+      `<polygon points="50,8 88,50 50,92 12,50"/>`,
+      // decoy: bowtie horizontal
+      `<polygon points="10,30 50,50 10,70 90,30 50,50 90,70"/>`,
+      // decoy: oval
+      `<ellipse cx="50" cy="50" rx="38" ry="44"/>`,
+      // CORRECT: hourglass
+      `<polygon points="15,10 85,10 50,50 85,90 15,90 50,50"/>`
+    ]
+  },
+
+  // ── MEDIUM ────────────────────────────────────────────────────────────────
+  {
+    label: "Bicycle", difficulty: "medium",
+    hints: ["Two equal-sized wheels", "Triangle frame in the center", "Handlebars extend from front fork"],
+    objectSvg: `
+      <circle cx="28" cy="62" r="22" fill="none" stroke="#60a5fa" stroke-width="5"/>
+      <circle cx="72" cy="62" r="22" fill="none" stroke="#60a5fa" stroke-width="5"/>
+      <line x1="28" y1="62" x2="50" y2="32" stroke="#60a5fa" stroke-width="4"/>
+      <line x1="50" y1="32" x2="72" y2="62" stroke="#60a5fa" stroke-width="4"/>
+      <line x1="28" y1="62" x2="50" y2="62" stroke="#60a5fa" stroke-width="4"/>
+      <line x1="50" y1="32" x2="50" y2="62" stroke="#60a5fa" stroke-width="4"/>
+      <line x1="64" y1="32" x2="80" y2="32" stroke="#60a5fa" stroke-width="5" stroke-linecap="round"/>
+      <line x1="72" y1="32" x2="72" y2="42" stroke="#60a5fa" stroke-width="4"/>
+    `,
+    correctIdx: 1,
+    shadows: [
+      // decoy: one large wheel, one small
+      `<circle cx="25" cy="65" r="26" fill="none" stroke-width="5"/>
+       <circle cx="75" cy="70" r="18" fill="none" stroke-width="5"/>
+       <line x1="25" y1="65" x2="52" y2="35" stroke-width="4"/>
+       <line x1="52" y1="35" x2="75" y2="70" stroke-width="4"/>`,
+      // CORRECT
+      `<circle cx="28" cy="62" r="22" fill="none" stroke-width="5"/>
+       <circle cx="72" cy="62" r="22" fill="none" stroke-width="5"/>
+       <line x1="28" y1="62" x2="50" y2="32" stroke-width="4"/>
+       <line x1="50" y1="32" x2="72" y2="62" stroke-width="4"/>
+       <line x1="28" y1="62" x2="50" y2="62" stroke-width="4"/>
+       <line x1="50" y1="32" x2="50" y2="62" stroke-width="4"/>
+       <line x1="64" y1="32" x2="80" y2="32" stroke-width="5" stroke-linecap="round"/>
+       <line x1="72" y1="32" x2="72" y2="42" stroke-width="4"/>`,
+      // decoy: wheels with crossbar but no fork
+      `<circle cx="28" cy="62" r="22" fill="none" stroke-width="5"/>
+       <circle cx="72" cy="62" r="22" fill="none" stroke-width="5"/>
+       <line x1="28" y1="62" x2="72" y2="62" stroke-width="4"/>
+       <line x1="50" y1="40" x2="72" y2="62" stroke-width="4"/>`,
+      // decoy: unicycle
+      `<circle cx="50" cy="68" r="24" fill="none" stroke-width="5"/>
+       <line x1="50" y1="44" x2="50" y2="20" stroke-width="4"/>
+       <line x1="34" y1="20" x2="66" y2="20" stroke-width="5" stroke-linecap="round"/>
+       <line x1="38" y1="56" x2="62" y2="56" stroke-width="4"/>`
+    ]
+  },
+
+  {
+    label: "Teapot", difficulty: "medium",
+    hints: ["Round body, flat bottom", "Curved spout pointing left", "Handle arc on the right", "Lid with small knob on top"],
+    objectSvg: `
+      <ellipse cx="52" cy="58" rx="30" ry="28" fill="#fb923c"/>
+      <ellipse cx="52" cy="58" rx="30" ry="28" fill="none" stroke="#ea580c" stroke-width="2"/>
+      <path d="M22,50 Q6,44 8,58 Q10,72 22,66" fill="none" stroke="#ea580c" stroke-width="5" stroke-linecap="round"/>
+      <path d="M80,52 Q92,48 94,58" fill="none" stroke="#ea580c" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="52" cy="30" rx="14" ry="6" fill="#fb923c" stroke="#ea580c" stroke-width="2"/>
+      <ellipse cx="52" cy="26" rx="5" ry="4" fill="#ea580c"/>
+    `,
+    correctIdx: 2,
+    shadows: [
+      // decoy: spout on right
+      `<ellipse cx="48" cy="58" rx="30" ry="28"/>
+       <path d="M78,50 Q94,44 92,58 Q90,72 78,66" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <path d="M20,52 Q8,48 6,58" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <ellipse cx="48" cy="30" rx="14" ry="6"/>
+       <ellipse cx="48" cy="26" rx="5" ry="4"/>`,
+      // decoy: no lid
+      `<ellipse cx="52" cy="60" rx="30" ry="30"/>
+       <path d="M22,52 Q6,46 8,60 Q10,74 22,68" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <path d="M80,54 Q92,50 94,60" fill="none" stroke-width="5" stroke-linecap="round"/>`,
+      // CORRECT
+      `<ellipse cx="52" cy="58" rx="30" ry="28"/>
+       <path d="M22,50 Q6,44 8,58 Q10,72 22,66" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <path d="M80,52 Q92,48 94,58" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <ellipse cx="52" cy="30" rx="14" ry="6"/>
+       <ellipse cx="52" cy="26" rx="5" ry="4"/>`,
+      // decoy: mug with handle but no spout
+      `<rect x="24" y="32" width="56" height="56" rx="10"/>
+       <path d="M80,42 Q96,42 96,60 Q96,78 80,78" fill="none" stroke-width="6" stroke-linecap="round"/>`
+    ]
+  },
+
+  {
+    label: "Chess Knight", difficulty: "medium",
+    hints: ["Horse head profile facing right", "Wide neck curves into a narrow base", "Stylised ear protrudes at the top", "Flat rectangular base at the bottom"],
+    objectSvg: `
+      <rect x="28" y="82" width="44" height="10" rx="3" fill="#cbd5e1"/>
+      <rect x="32" y="72" width="36" height="12" rx="3" fill="#cbd5e1"/>
+      <path d="M38,72 Q32,55 35,40 Q38,28 50,22 Q58,18 64,20 Q70,22 68,30 Q62,28 60,35 Q72,40 70,55 Q68,68 60,72Z" fill="#cbd5e1"/>
+      <circle cx="58" cy="30" r="3" fill="#1e293b"/>
+      <path d="M50,22 Q52,14 58,12" fill="none" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>
+    `,
+    correctIdx: 0,
+    shadows: [
+      // CORRECT
+      `<rect x="28" y="82" width="44" height="10" rx="3"/>
+       <rect x="32" y="72" width="36" height="12" rx="3"/>
+       <path d="M38,72 Q32,55 35,40 Q38,28 50,22 Q58,18 64,20 Q70,22 68,30 Q62,28 60,35 Q72,40 70,55 Q68,68 60,72Z"/>
+       <path d="M50,22 Q52,14 58,12" fill="none" stroke-width="4" stroke-linecap="round"/>`,
+      // decoy: facing left
+      `<rect x="28" y="82" width="44" height="10" rx="3"/>
+       <rect x="32" y="72" width="36" height="12" rx="3"/>
+       <path d="M62,72 Q68,55 65,40 Q62,28 50,22 Q42,18 36,20 Q30,22 32,30 Q38,28 40,35 Q28,40 30,55 Q32,68 40,72Z"/>
+       <path d="M50,22 Q48,14 42,12" fill="none" stroke-width="4" stroke-linecap="round"/>`,
+      // decoy: rook shape
+      `<rect x="28" y="72" width="44" height="20" rx="3"/>
+       <rect x="28" y="20" width="44" height="52" rx="2"/>
+       <rect x="28" y="10" width="10" height="18" rx="2"/>
+       <rect x="45" y="10" width="10" height="18" rx="2"/>
+       <rect x="62" y="10" width="10" height="18" rx="2"/>`,
+      // decoy: horse head no base
+      `<path d="M38,88 Q32,71 35,56 Q38,44 50,38 Q58,34 64,36 Q70,38 68,46 Q62,44 60,51 Q72,56 70,71 Q68,84 60,88Z"/>
+       <path d="M50,38 Q52,30 58,28" fill="none" stroke-width="4" stroke-linecap="round"/>`
+    ]
+  },
+
+  {
+    label: "Eiffel Tower", difficulty: "medium",
+    hints: ["Wide arch base with four legs", "Tapers progressively upward", "Small observation platform near top", "Pointed spire at the very tip"],
+    objectSvg: `
+      <polygon points="50,5 58,42 78,90 66,90 58,62 42,62 34,90 22,90 42,42" fill="#facc15"/>
+      <rect x="34" y="60" width="32" height="5" rx="1" fill="#eab308"/>
+      <rect x="40" y="36" width="20" height="4" rx="1" fill="#eab308"/>
+      <path d="M22,90 Q28,78 34,90" fill="none" stroke="#eab308" stroke-width="2"/>
+      <path d="M66,90 Q72,78 78,90" fill="none" stroke="#eab308" stroke-width="2"/>
+    `,
+    correctIdx: 3,
+    shadows: [
+      // decoy: rocket
+      `<polygon points="50,5 62,30 62,80 38,80 38,30"/>
+       <polygon points="38,60 24,80 38,80"/>
+       <polygon points="62,60 76,80 62,80"/>
+       <rect x="44" y="80" width="12" height="12" rx="3"/>`,
+      // decoy: triangle with crossbar
+      `<polygon points="50,8 86,90 14,90"/>
+       <line x1="30" y1="58" x2="70" y2="58" stroke-width="4"/>
+       <line x1="38" y1="38" x2="62" y2="38" stroke-width="3"/>`,
+      // decoy: narrow pyramid
+      `<polygon points="50,5 64,90 36,90"/>
+       <line x1="40" y1="55" x2="60" y2="55" stroke-width="3"/>`,
+      // CORRECT
+      `<polygon points="50,5 58,42 78,90 66,90 58,62 42,62 34,90 22,90 42,42"/>
+       <rect x="34" y="60" width="32" height="5" rx="1"/>
+       <rect x="40" y="36" width="20" height="4" rx="1"/>`
+    ]
+  },
+
+  // ── HARD ──────────────────────────────────────────────────────────────────
+  {
+    label: "Saxophone", difficulty: "hard",
+    hints: ["Long curved body wider at the bottom", "Thin neck bends sharply upward at top", "Bell flares outward at the base", "Small mouthpiece protrudes at the top-right"],
+    objectSvg: `
+      <path d="M55,10 Q65,10 66,20 L66,30 Q66,35 60,36 Q54,36 53,30 L53,22 Q48,20 46,28 L44,72 Q44,86 56,88 Q72,88 74,72 Q74,60 64,58 L58,58" fill="none" stroke="#f97316" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="89" rx="14" ry="6" fill="#f97316" opacity="0.7"/>
+    `,
+    correctIdx: 1,
+    shadows: [
+      // decoy: clarinet straight
+      `<path d="M50,8 L50,78 Q50,88 55,90 Q60,92 62,86 L60,78 L52,78 L52,8Z" />
+       <ellipse cx="51" cy="90" rx="6" ry="3"/>`,
+      // CORRECT
+      `<path d="M55,10 Q65,10 66,20 L66,30 Q66,35 60,36 Q54,36 53,30 L53,22 Q48,20 46,28 L44,72 Q44,86 56,88 Q72,88 74,72 Q74,60 64,58 L58,58" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+       <ellipse cx="60" cy="89" rx="14" ry="6"/>`,
+      // decoy: trumpet
+      `<path d="M20,46 L60,46 Q70,46 72,42 L80,28 Q82,22 78,20 Q74,18 72,24 L66,34 Q64,38 60,38 L20,38Z" />
+       <ellipse cx="16" cy="42" rx="8" ry="14"/>
+       <line x1="60" y1="20" x2="82" y2="20" stroke-width="5" stroke-linecap="round"/>`,
+      // decoy: similar but bell on wrong side
+      `<path d="M45,10 Q35,10 34,20 L34,30 Q34,35 40,36 Q46,36 47,30 L47,22 Q52,20 54,28 L56,72 Q56,86 44,88 Q28,88 26,72 Q26,60 36,58 L42,58" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+       <ellipse cx="40" cy="89" rx="14" ry="6"/>`
+    ]
+  },
+
+  {
+    label: "Scorpion", difficulty: "hard",
+    hints: ["Oval body in the center", "Two large pincer claws in front", "Segmented tail curves up and over", "Stinger tip at the very end of tail", "Eight small legs"],
+    objectSvg: `
+      <ellipse cx="50" cy="58" rx="20" ry="15" fill="#a78bfa"/>
+      <path d="M30,55 Q18,48 14,54 Q10,60 18,64 Q26,68 30,62" fill="#a78bfa" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M30,55 Q22,44 16,46 Q10,48 14,54" fill="#a78bfa" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M70,55 Q82,48 86,54 Q90,60 82,64 Q74,68 70,62" fill="#a78bfa" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M70,55 Q78,44 84,46 Q90,48 86,54" fill="#a78bfa" stroke="#7c3aed" stroke-width="2"/>
+      <path d="M50,43 Q50,30 60,22 Q68,15 72,20 Q68,26 64,28 Q60,30 58,38" fill="none" stroke="#7c3aed" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="72" cy="18" r="4" fill="#ef4444"/>
+      <line x1="38" y1="62" x2="28" y2="72" stroke="#7c3aed" stroke-width="3"/>
+      <line x1="42" y1="65" x2="34" y2="76" stroke="#7c3aed" stroke-width="3"/>
+      <line x1="58" y1="65" x2="66" y2="76" stroke="#7c3aed" stroke-width="3"/>
+      <line x1="62" y1="62" x2="72" y2="72" stroke="#7c3aed" stroke-width="3"/>
+    `,
+    correctIdx: 3,
+    shadows: [
+      // decoy: crab, different claw shape
+      `<ellipse cx="50" cy="58" rx="22" ry="14"/>
+       <path d="M28,52 Q14,42 10,50 Q6,58 14,62 Q22,66 28,58" />
+       <path d="M72,52 Q86,42 90,50 Q94,58 86,62 Q78,66 72,58" />
+       <line x1="34" y1="65" x2="22" y2="78" stroke-width="3"/>
+       <line x1="40" y1="68" x2="30" y2="82" stroke-width="3"/>
+       <line x1="60" y1="68" x2="70" y2="82" stroke-width="3"/>
+       <line x1="66" y1="65" x2="78" y2="78" stroke-width="3"/>`,
+      // decoy: scorpion tail curls DOWN
+      `<ellipse cx="50" cy="48" rx="20" ry="15"/>
+       <path d="M30,45 Q18,38 14,44 Q10,50 18,54 Q26,58 30,52"/>
+       <path d="M30,45 Q22,34 16,36 Q10,38 14,44"/>
+       <path d="M70,45 Q82,38 86,44 Q90,50 82,54 Q74,58 70,52"/>
+       <path d="M70,45 Q78,34 84,36 Q90,38 86,44"/>
+       <path d="M50,63 Q50,76 60,84 Q68,91 72,86 Q68,80 64,78 Q60,76 58,68" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <circle cx="72" cy="88" r="4"/>`,
+      // decoy: spider (8 longer legs, round body, no claws)
+      `<ellipse cx="50" cy="55" rx="18" ry="16"/>
+       <line x1="32" y1="50" x2="10" y2="36" stroke-width="3"/>
+       <line x1="32" y1="56" x2="8" y2="52" stroke-width="3"/>
+       <line x1="32" y1="62" x2="10" y2="72" stroke-width="3"/>
+       <line x1="36" y1="68" x2="18" y2="84" stroke-width="3"/>
+       <line x1="68" y1="50" x2="90" y2="36" stroke-width="3"/>
+       <line x1="68" y1="56" x2="92" y2="52" stroke-width="3"/>
+       <line x1="68" y1="62" x2="90" y2="72" stroke-width="3"/>
+       <line x1="64" y1="68" x2="82" y2="84" stroke-width="3"/>`,
+      // CORRECT
+      `<ellipse cx="50" cy="58" rx="20" ry="15"/>
+       <path d="M30,55 Q18,48 14,54 Q10,60 18,64 Q26,68 30,62"/>
+       <path d="M30,55 Q22,44 16,46 Q10,48 14,54"/>
+       <path d="M70,55 Q82,48 86,54 Q90,60 82,64 Q74,68 70,62"/>
+       <path d="M70,55 Q78,44 84,46 Q90,48 86,54"/>
+       <path d="M50,43 Q50,30 60,22 Q68,15 72,20 Q68,26 64,28 Q60,30 58,38" fill="none" stroke-width="5" stroke-linecap="round"/>
+       <circle cx="72" cy="18" r="4"/>
+       <line x1="38" y1="62" x2="28" y2="72" stroke-width="3"/>
+       <line x1="42" y1="65" x2="34" y2="76" stroke-width="3"/>
+       <line x1="58" y1="65" x2="66" y2="76" stroke-width="3"/>
+       <line x1="62" y1="62" x2="72" y2="72" stroke-width="3"/>`
+    ]
+  },
+
+  {
+    label: "Origami Crane", difficulty: "hard",
+    hints: ["Wings spread wide and flat", "Pointed head extends from the body", "Long pointed tail on the opposite side", "Diamond-shaped body in the center"],
+    objectSvg: `
+      <polygon points="50,48 10,32 30,52 10,72" fill="#38bdf8" opacity="0.9"/>
+      <polygon points="50,48 90,32 70,52 90,72" fill="#0ea5e9" opacity="0.9"/>
+      <polygon points="30,52 50,48 70,52 50,80" fill="#0284c7"/>
+      <line x1="50" y1="48" x2="42" y2="30" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+      <polygon points="42,30 38,22 48,28" fill="#38bdf8"/>
+    `,
+    correctIdx: 2,
+    shadows: [
+      // decoy: butterfly
+      `<ellipse cx="30" cy="42" rx="22" ry="14" transform="rotate(-20 30 42)"/>
+       <ellipse cx="70" cy="42" rx="22" ry="14" transform="rotate(20 70 42)"/>
+       <ellipse cx="32" cy="62" rx="14" ry="10" transform="rotate(15 32 62)"/>
+       <ellipse cx="68" cy="62" rx="14" ry="10" transform="rotate(-15 68 62)"/>
+       <line x1="50" y1="30" x2="50" y2="76" stroke-width="3"/>`,
+      // decoy: same but no head
+      `<polygon points="50,48 10,32 30,52 10,72"/>
+       <polygon points="50,48 90,32 70,52 90,72"/>
+       <polygon points="30,52 50,48 70,52 50,80"/>`,
+      // CORRECT
+      `<polygon points="50,48 10,32 30,52 10,72"/>
+       <polygon points="50,48 90,32 70,52 90,72"/>
+       <polygon points="30,52 50,48 70,52 50,80"/>
+       <line x1="50" y1="48" x2="42" y2="30" stroke-width="3" stroke-linecap="round"/>
+       <polygon points="42,30 38,22 48,28"/>`,
+      // decoy: bird in flight - wings up
+      `<path d="M10,55 Q30,30 50,50 Q70,30 90,55" fill="none" stroke-width="8" stroke-linecap="round"/>
+       <ellipse cx="50" cy="55" rx="10" ry="7"/>
+       <line x1="50" y1="62" x2="50" y2="82" stroke-width="5" stroke-linecap="round"/>
+       <line x1="50" y1="82" x2="40" y2="90" stroke-width="4" stroke-linecap="round"/>
+       <line x1="50" y1="82" x2="60" y2="90" stroke-width="4" stroke-linecap="round"/>`
+    ]
+  },
+
+  {
+    label: "Astronaut", difficulty: "hard",
+    hints: ["Large round helmet dominates the head", "Bulky suit with wide shoulders", "Backpack protrudes behind the torso", "Thick gloves on both hands", "Boots visible at the bottom"],
+    objectSvg: `
+      <circle cx="50" cy="28" r="20" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+      <circle cx="50" cy="28" r="13" fill="#93c5fd" opacity="0.6"/>
+      <rect x="28" y="44" width="44" height="36" rx="10" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+      <rect x="36" y="80" width="12" height="12" rx="4" fill="#94a3b8"/>
+      <rect x="52" y="80" width="12" height="12" rx="4" fill="#94a3b8"/>
+      <rect x="14" y="48" width="14" height="22" rx="7" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+      <rect x="72" y="48" width="14" height="22" rx="7" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+      <rect x="12" y="66" width="18" height="10" rx="4" fill="#94a3b8"/>
+      <rect x="70" y="66" width="18" height="10" rx="4" fill="#94a3b8"/>
+      <rect x="56" y="44" width="18" height="22" rx="5" fill="#cbd5e1"/>
+    `,
+    correctIdx: 0,
+    shadows: [
+      // CORRECT
+      `<circle cx="50" cy="28" r="20"/>
+       <circle cx="50" cy="28" r="13" opacity="0.4"/>
+       <rect x="28" y="44" width="44" height="36" rx="10"/>
+       <rect x="36" y="80" width="12" height="12" rx="4"/>
+       <rect x="52" y="80" width="12" height="12" rx="4"/>
+       <rect x="14" y="48" width="14" height="22" rx="7"/>
+       <rect x="72" y="48" width="14" height="22" rx="7"/>
+       <rect x="12" y="66" width="18" height="10" rx="4"/>
+       <rect x="70" y="66" width="18" height="10" rx="4"/>
+       <rect x="56" y="44" width="18" height="22" rx="5"/>`,
+      // decoy: robot same shape but no backpack, round head
+      `<circle cx="50" cy="26" r="18"/>
+       <rect x="30" y="44" width="40" height="34" rx="6"/>
+       <rect x="38" y="78" width="10" height="14" rx="3"/>
+       <rect x="52" y="78" width="10" height="14" rx="3"/>
+       <rect x="16" y="48" width="14" height="22" rx="5"/>
+       <rect x="70" y="48" width="14" height="22" rx="5"/>
+       <rect x="14" y="66" width="18" height="9" rx="3"/>
+       <rect x="68" y="66" width="18" height="9" rx="3"/>`,
+      // decoy: diver, slim suit, oval helmet
+      `<ellipse cx="50" cy="26" rx="16" ry="20"/>
+       <rect x="34" y="44" width="32" height="42" rx="6"/>
+       <rect x="38" y="86" width="10" height="10" rx="3"/>
+       <rect x="52" y="86" width="10" height="10" rx="3"/>
+       <rect x="18" y="50" width="16" height="18" rx="5"/>
+       <rect x="66" y="50" width="16" height="18" rx="5"/>`,
+      // decoy: astronaut no backpack
+      `<circle cx="50" cy="28" r="20"/>
+       <rect x="28" y="44" width="44" height="36" rx="10"/>
+       <rect x="36" y="80" width="12" height="12" rx="4"/>
+       <rect x="52" y="80" width="12" height="12" rx="4"/>
+       <rect x="14" y="48" width="14" height="22" rx="7"/>
+       <rect x="72" y="48" width="14" height="22" rx="7"/>
+       <rect x="12" y="66" width="18" height="10" rx="4"/>
+       <rect x="70" y="66" width="18" height="10" rx="4"/>`
+    ]
+  },
+
+  {
+    label: "Viking Ship", difficulty: "hard",
+    hints: ["Curved hull like a crescent", "Dragon head prow at the front", "Single tall mast in the center", "Square sail hanging from crossbar", "Oars extend from both sides"],
+    objectSvg: `
+      <path d="M8,62 Q20,80 50,82 Q80,80 92,62 L88,58 Q76,72 50,74 Q24,72 12,58Z" fill="#92400e"/>
+      <path d="M8,62 Q6,50 12,46 Q20,40 26,44 L28,58 Q16,60 12,58Z" fill="#b45309"/>
+      <path d="M92,62 Q94,50 88,46 Q80,40 74,44 L72,58 Q84,60 88,58Z" fill="#78350f"/>
+      <line x1="50" y1="20" x2="50" y2="64" stroke="#78350f" stroke-width="4"/>
+      <line x1="30" y1="26" x2="70" y2="26" stroke="#78350f" stroke-width="3"/>
+      <rect x="30" y="26" width="40" height="28" rx="2" fill="#fbbf24" opacity="0.8"/>
+      <line x1="22" y1="58" x2="14" y2="72" stroke="#78350f" stroke-width="3"/>
+      <line x1="32" y1="60" x2="26" y2="76" stroke="#78350f" stroke-width="3"/>
+      <line x1="68" y1="60" x2="74" y2="76" stroke="#78350f" stroke-width="3"/>
+      <line x1="78" y1="58" x2="86" y2="72" stroke="#78350f" stroke-width="3"/>
+    `,
+    correctIdx: 1,
+    shadows: [
+      // decoy: regular sailboat
+      `<path d="M15,72 Q50,78 85,72 L80,65 Q50,70 20,65Z"/>
+       <line x1="50" y1="20" x2="50" y2="68" stroke-width="4"/>
+       <polygon points="50,20 50,62 20,62"/>
+       <polygon points="50,20 50,62 80,50"/>`,
+      // CORRECT
+      `<path d="M8,62 Q20,80 50,82 Q80,80 92,62 L88,58 Q76,72 50,74 Q24,72 12,58Z"/>
+       <path d="M8,62 Q6,50 12,46 Q20,40 26,44 L28,58 Q16,60 12,58Z"/>
+       <path d="M92,62 Q94,50 88,46 Q80,40 74,44 L72,58 Q84,60 88,58Z"/>
+       <line x1="50" y1="20" x2="50" y2="64" stroke-width="4"/>
+       <line x1="30" y1="26" x2="70" y2="26" stroke-width="3"/>
+       <rect x="30" y="26" width="40" height="28" rx="2"/>
+       <line x1="22" y1="58" x2="14" y2="72" stroke-width="3"/>
+       <line x1="32" y1="60" x2="26" y2="76" stroke-width="3"/>
+       <line x1="68" y1="60" x2="74" y2="76" stroke-width="3"/>
+       <line x1="78" y1="58" x2="86" y2="72" stroke-width="3"/>`,
+      // decoy: same hull, no dragon heads, no oars
+      `<path d="M8,62 Q20,80 50,82 Q80,80 92,62 L88,58 Q76,72 50,74 Q24,72 12,58Z"/>
+       <line x1="50" y1="22" x2="50" y2="64" stroke-width="4"/>
+       <line x1="30" y1="28" x2="70" y2="28" stroke-width="3"/>
+       <rect x="30" y="28" width="40" height="26" rx="2"/>`,
+      // decoy: canoe no mast
+      `<path d="M5,55 Q50,75 95,55 Q90,48 50,60 Q10,48 5,55Z"/>
+       <line x1="18" y1="52" x2="10" y2="68" stroke-width="3"/>
+       <line x1="30" y1="56" x2="24" y2="72" stroke-width="3"/>
+       <line x1="70" y1="56" x2="76" y2="72" stroke-width="3"/>
+       <line x1="82" y1="52" x2="90" y2="68" stroke-width="3"/>`
+    ]
+  }
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let puzzles = [], currentRound = 0, score = 0, streak = 0, bestStreak = 0;
+let answered = false, timerInterval = null, timeLeft = 0;
+const TOTAL_ROUNDS = 12;
+const TIME_LIMITS = { easy: 20, medium: 15, hard: 10 };
+const POINTS = { easy: 100, medium: 150, hard: 220 };
+const STREAK_BONUS = 50;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function init() {
+  currentRound = 0; score = 0; streak = 0; bestStreak = 0;
+  answered = false;
+  puzzles = shuffle(ALL_PUZZLES).slice(0, TOTAL_ROUNDS);
+
+  document.getElementById('endScreen').classList.remove('show');
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('gameContent').style.display = '';
+
+  updateHUD();
+  renderRound();
+}
+
+function updateHUD() {
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('streakDisplay').textContent = streak;
+}
+
+function renderRound() {
+  answered = false;
+  stopTimer();
+
+  const puzzle = puzzles[currentRound];
+  document.getElementById('roundTag').textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
+
+  const diffEl = document.getElementById('diffTag');
+  diffEl.textContent = puzzle.difficulty.charAt(0).toUpperCase() + puzzle.difficulty.slice(1);
+  diffEl.className = 'difficulty-tag diff-' + puzzle.difficulty;
+
+  document.getElementById('progressFill').style.width = (currentRound / TOTAL_ROUNDS * 100) + '%';
+  document.getElementById('objectSvg').innerHTML = puzzle.objectSvg;
+  document.getElementById('objNameLabel').textContent = puzzle.label;
+
+  // Hints
+  const hintLines = document.getElementById('hintLines');
+  hintLines.innerHTML = puzzle.hints.map(h =>
+    `<div class="hint-clue"><div class="clue-dot"></div><div class="clue-text">${h}</div></div>`
+  ).join('');
+
+  // Build shuffled options
+  const indices = [0, 1, 2, 3];
+  const shuffledIdx = shuffle(indices);
+  const grid = document.getElementById('shadowsGrid');
+  grid.innerHTML = '';
+
+  shuffledIdx.forEach((origIdx, pos) => {
+    const btn = document.createElement('div');
+    btn.className = 'shadow-option';
+    btn.innerHTML = `
+      <span class="opt-num">${pos + 1}</span>
+      <svg viewBox="0 0 100 100">${puzzle.shadows[origIdx]}</svg>
+    `;
+    btn.addEventListener('click', () => handleAnswer(btn, origIdx === puzzle.correctIdx, puzzle));
+    grid.appendChild(btn);
+  });
+
+  // Feedback + next
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  startTimer(TIME_LIMITS[puzzle.difficulty], puzzle);
+}
+
+function startTimer(seconds, puzzle) {
+  timeLeft = seconds;
+  const ring = document.getElementById('timerRing');
+  const num = document.getElementById('timerNum');
+  const circumference = 175.9;
+
+  ring.style.stroke = 'var(--accent)';
+  ring.style.strokeDashoffset = '0';
+  num.textContent = seconds;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const progress = timeLeft / seconds;
+    ring.style.strokeDashoffset = circumference * (1 - progress);
+    num.textContent = timeLeft;
+
+    if (progress < 0.33) ring.style.stroke = 'var(--danger)';
+    else if (progress < 0.6) ring.style.stroke = 'var(--warn)';
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      handleTimeout(puzzle);
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+function handleTimeout(puzzle) {
+  if (answered) return;
+  answered = true;
+  streak = 0;
+  updateHUD();
+
+  const allBtns = document.querySelectorAll('.shadow-option');
+  allBtns.forEach(b => {
+    b.classList.add('disabled', 'dimmed');
+    const svg = b.querySelector('svg');
+  });
+  // Reveal correct
+  allBtns.forEach((b, i) => {
+    const svg = b.querySelector('svg');
+    const origIdx = getOrigIdxFromBtn(b, puzzle);
+    if (origIdx === puzzle.correctIdx) {
+      b.classList.remove('dimmed');
+      b.classList.add('correct');
+      b.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+    }
+  });
+
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback timeout show';
+  fb.textContent = `⏱ Time's up! The correct shadow is highlighted above.`;
+
+  showNextBtn();
+}
+
+function getOrigIdxFromBtn(btn, puzzle) {
+  // We store data via data attribute approach — use btn index in grid
+  // Instead, re-read from stored data attribute
+  return parseInt(btn.dataset.origIdx);
+}
+
+function handleAnswer(btn, isCorrect, puzzle) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+
+  const allBtns = document.querySelectorAll('.shadow-option');
+  allBtns.forEach(b => b.classList.add('disabled'));
+
+  const fb = document.getElementById('feedbackBar');
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    btn.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+    const pts = POINTS[puzzle.difficulty] + (streak > 1 ? STREAK_BONUS * (streak - 1) : 0);
+    score += pts;
+    updateHUD();
+
+    const timeBonus = timeLeft > 0 ? Math.round(timeLeft * 3) : 0;
+    score += timeBonus;
+
+    fb.className = 'feedback good show';
+    const msgs = [
+      `Correct! +${pts} pts${timeBonus ? ` (+${timeBonus} speed bonus)` : ''}`,
+      `Sharp eye! +${pts} pts${streak > 2 ? ` 🔥 ${streak}× streak!` : ''}`,
+      `Nailed it! +${pts} pts${timeBonus > 20 ? ' ⚡ Fast!' : ''}`
+    ];
+    fb.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+
+    allBtns.forEach(b => {
+      if (!b.classList.contains('correct')) b.classList.add('dimmed');
+    });
+  } else {
+    btn.classList.add('wrong');
+    btn.innerHTML += `<div class="result-badge badge-wrong">✗</div>`;
+    streak = 0;
+    updateHUD();
+
+    allBtns.forEach(b => {
+      const svgContent = b.querySelector('svg').innerHTML;
+      // Find and mark correct
+      const origSvg = puzzle.shadows[puzzle.correctIdx];
+      if (svgContent.trim() === origSvg.trim()) {
+        b.classList.add('correct');
+        b.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+      } else if (!b.classList.contains('wrong')) {
+        b.classList.add('dimmed');
+      }
+    });
+
+    fb.className = 'feedback bad show';
+    fb.textContent = `Not quite. Study the ${puzzle.label}'s silhouette carefully — the correct one is highlighted.`;
+  }
+
+  showNextBtn();
+}
+
+function showNextBtn() {
+  setTimeout(() => {
+    const nb = document.getElementById('nextBtn');
+    nb.className = 'next-btn show';
+    nb.textContent = currentRound < puzzles.length - 1 ? 'Next Round →' : 'View Results';
+    nb.onclick = advanceRound;
+  }, 500);
+}
+
+function advanceRound() {
+  currentRound++;
+  if (currentRound >= puzzles.length) {
+    showEnd();
+  } else {
+    renderRound();
+  }
+}
+
+function showEnd() {
+  stopTimer();
+  document.getElementById('gameContent').style.display = 'none';
+  const end = document.getElementById('endScreen');
+  end.style.display = 'flex';
+  end.classList.add('show');
+
+  document.getElementById('progressFill').style.width = '100%';
+
+  const correct = puzzles.filter((_, i) => i < currentRound).length; // approximate
+  document.getElementById('finalCorrect').textContent = `${score > 0 ? '✓' : '—'}`;
+
+  // Recount correct from score
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalStreak').textContent = bestStreak;
+
+  // Count correct answers
+  document.getElementById('finalCorrect').textContent = countCorrect;
+
+  const pct = countCorrect / TOTAL_ROUNDS;
+  let icon, name, desc;
+  if (pct === 1) { icon='🏆'; name='Perfect Observer'; desc='Flawless spatial reasoning. Every shadow matched without hesitation.'; }
+  else if (pct >= 0.9) { icon='🎯'; name='Expert Analyst'; desc='Exceptional precision. You read silhouettes with near-perfect accuracy.'; }
+  else if (pct >= 0.75) { icon='🧠'; name='Sharp Eye'; desc='Strong visual pattern recognition. Only a few slipped past you.'; }
+  else if (pct >= 0.6) { icon='🔍'; name='Keen Observer'; desc='Above average spatial awareness. With practice you can go further.'; }
+  else if (pct >= 0.4) { icon='👁'; name='Developing Eye'; desc='You have the instinct — refining your focus will sharpen accuracy.'; }
+  else { icon='📐'; name='Trainee'; desc='Shadow reading takes practice. Study the clues carefully next time.'; }
+
+  document.getElementById('ratingIcon').textContent = icon;
+  document.getElementById('ratingName').textContent = name;
+  document.getElementById('ratingDesc').textContent = desc;
+  document.getElementById('endTitle').textContent = name;
+  document.getElementById('endSubtitle').textContent = `${countCorrect} / ${TOTAL_ROUNDS} correct · ${score} points`;
+}
+
+// Track correct answers
+let countCorrect = 0;
+
+// Override handleAnswer to also track
+const _origHandleAnswer = handleAnswer;
+
+function init() {
+  currentRound = 0; score = 0; streak = 0; bestStreak = 0; countCorrect = 0;
+  answered = false;
+  puzzles = shuffle(ALL_PUZZLES).slice(0, TOTAL_ROUNDS);
+
+  document.getElementById('endScreen').classList.remove('show');
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('gameContent').style.display = '';
+
+  updateHUD();
+  renderRound();
+}
+
+// Patch handleAnswer to count
+function handleAnswer(btn, isCorrect, puzzle) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+
+  if (isCorrect) countCorrect++;
+
+  const allBtns = document.querySelectorAll('.shadow-option');
+  allBtns.forEach(b => b.classList.add('disabled'));
+
+  const fb = document.getElementById('feedbackBar');
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    btn.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+    const pts = POINTS[puzzle.difficulty] + (streak > 1 ? STREAK_BONUS * (streak - 1) : 0);
+    const timeBonus = timeLeft > 0 ? Math.round(timeLeft * 3) : 0;
+    score += pts + timeBonus;
+    updateHUD();
+    fb.className = 'feedback good show';
+    const suffix = streak > 2 ? ` 🔥 ${streak}× streak!` : (timeBonus > 15 ? ' ⚡ Speed bonus!' : '');
+    fb.textContent = `Correct! +${pts + timeBonus} pts${suffix}`;
+    allBtns.forEach(b => { if (!b.classList.contains('correct')) b.classList.add('dimmed'); });
+  } else {
+    btn.classList.add('wrong');
+    btn.innerHTML += `<div class="result-badge badge-wrong">✗</div>`;
+    streak = 0;
+    updateHUD();
+    // Mark correct
+    allBtns.forEach(b => {
+      if (!b.classList.contains('wrong')) {
+        const svgEl = b.querySelector('svg');
+        // compare innerHTML loosely
+        if (b.dataset.isCorrect === '1') {
+          b.classList.add('correct');
+          b.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+        } else {
+          b.classList.add('dimmed');
+        }
+      }
+    });
+    fb.className = 'feedback bad show';
+    fb.textContent = `Not quite — study the ${puzzle.label}'s specific silhouette. Correct answer highlighted.`;
+  }
+
+  showNextBtn();
+}
+
+// We need a way to mark correct option. Override renderRound to tag it.
+function renderRound() {
+  answered = false;
+  stopTimer();
+
+  const puzzle = puzzles[currentRound];
+  document.getElementById('roundTag').textContent = `Round ${currentRound + 1} / ${TOTAL_ROUNDS}`;
+
+  const diffEl = document.getElementById('diffTag');
+  diffEl.textContent = puzzle.difficulty.charAt(0).toUpperCase() + puzzle.difficulty.slice(1);
+  diffEl.className = 'difficulty-tag diff-' + puzzle.difficulty;
+
+  document.getElementById('progressFill').style.width = (currentRound / TOTAL_ROUNDS * 100) + '%';
+  document.getElementById('objectSvg').innerHTML = puzzle.objectSvg;
+  document.getElementById('objNameLabel').textContent = puzzle.label;
+
+  const hintLines = document.getElementById('hintLines');
+  hintLines.innerHTML = puzzle.hints.map(h =>
+    `<div class="hint-clue"><div class="clue-dot"></div><div class="clue-text">${h}</div></div>`
+  ).join('');
+
+  const indices = [0, 1, 2, 3];
+  const shuffledIdx = shuffle(indices);
+  const grid = document.getElementById('shadowsGrid');
+  grid.innerHTML = '';
+
+  shuffledIdx.forEach((origIdx, pos) => {
+    const btn = document.createElement('div');
+    btn.className = 'shadow-option';
+    btn.dataset.isCorrect = origIdx === puzzle.correctIdx ? '1' : '0';
+    btn.innerHTML = `
+      <span class="opt-num">${pos + 1}</span>
+      <svg viewBox="0 0 100 100">${puzzle.shadows[origIdx]}</svg>
+    `;
+    btn.addEventListener('click', () => handleAnswer(btn, origIdx === puzzle.correctIdx, puzzle));
+    grid.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  startTimer(TIME_LIMITS[puzzle.difficulty], puzzle);
+}
+
+function handleTimeout(puzzle) {
+  if (answered) return;
+  answered = true;
+  streak = 0;
+  updateHUD();
+
+  const allBtns = document.querySelectorAll('.shadow-option');
+  allBtns.forEach(b => {
+    b.classList.add('disabled');
+    if (b.dataset.isCorrect === '1') {
+      b.classList.add('correct');
+      b.innerHTML += `<div class="result-badge badge-correct">✓</div>`;
+    } else {
+      b.classList.add('dimmed');
+    }
+  });
+
+  const fb = document.getElementById('feedbackBar');
+  fb.className = 'feedback timeout show';
+  fb.textContent = `⏱ Time's up! The correct shadow is highlighted.`;
+  showNextBtn();
+}
+
+init();
+</script>
+
+</body>
+</html>
